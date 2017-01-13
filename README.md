@@ -2,6 +2,8 @@
 
 High-performance API for [bencinmonitor.si].
 
+[![Build Status](https://travis-ci.org/bencinmonitor/d2.svg?branch=master)](https://travis-ci.org/bencinmonitor/d2)
+
 ## REST Endpoints
 
 ### GET /stations

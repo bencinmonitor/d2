@@ -8,6 +8,19 @@ scala:
 services:
   - docker
 
+before_script:
+  - echo "Travis branch is $TRAVIS_BRANCH"
+  - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+
 script:
   - sbt test
   - sbt assembly
+  - docker build -t bencinmonitor/d2:latest .
+
+after_script:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker push bencinmonitor/d2:latest;
+    fi
+  - if [ "$TRAVIS_BRANCH" == "production" ]; then
+    docker push bencinmonitor/d2:production;
+    fi
