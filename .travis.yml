@@ -20,8 +20,7 @@ before_script:
   - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 
 script:
-  - sbt test
-  - sbt assembly
+  - sbt assembly # also runs tests
   - docker build -t bencinmonitor/d2:latest .
 
 after_script:

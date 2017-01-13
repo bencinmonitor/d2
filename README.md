@@ -27,7 +27,7 @@ docker build -t bencinmonitor/d2:latest .
 docker run -ti --rm \
     -e MONGO_URI=mongodb://10.8.8.8:27017/bm \
     -e REDIS_URI=redis://@10.8.8.8:6379/1 \
-    -p 0.0.0.0:4444:9000 bencinmonitor/d2:latest
+    -p 0.0.0.0:4444:4444 bencinmonitor/d2:latest
 ```
 
 
