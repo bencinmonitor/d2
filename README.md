@@ -30,6 +30,11 @@ docker run -ti --rm \
     -p 0.0.0.0:4444:4444 bencinmonitor/d2:latest
 ```
 
+## Environment variables
+
+- `PORT`
+- `MONGO_URI`
+- `REDIS_URI`
 
 # Author
 
