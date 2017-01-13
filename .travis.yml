@@ -2,6 +2,13 @@ sudo: required
 install: true
 language: scala
 
+cache:
+  directories:
+    - $HOME/.ivy2
+    - $HOME/.sbt
+    - $HOME/.gradle
+    - $HOME/.docker
+
 scala:
    - 2.11.8
 
