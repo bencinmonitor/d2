@@ -1,0 +1,8 @@
+.git
+.idea
+target
+!target/scala-2.11/d2.jar
+project
+test
+app
+

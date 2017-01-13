@@ -1,0 +1,13 @@
+sudo: required
+install: true
+language: scala
+
+scala:
+   - 2.11.8
+
+services:
+  - docker
+
+script:
+  - sbt test
+  - sbt assembly

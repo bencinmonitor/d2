@@ -28,3 +28,20 @@ scalacOptions in ThisBuild ++= Seq(
   "-deprecation",
   "-unchecked"
 )
+
+
+assemblyJarName in assembly := "d2.jar"
+
+mainClass in assembly := Some("play.core.server.ProdServerStart")
+
+fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value)
+
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+  case PathList("META-INF", xs@_*) => MergeStrategy.last
+  case PathList("org", "apache", "commons", "logging", xs@_*) => MergeStrategy.last
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
+
