@@ -1,9 +1,15 @@
 package models
 
+import math._
 import play.api.libs.json.{Reads, __}
 import play.api.libs.functional.syntax._
 
-case class Location(locationType: String, coordinates: Seq[Double])
+case class Location(locationType: String, coordinates: Seq[Double]) {
+
+  def distanceTo(locationB: Location): Double = helpers.Haversine.haversine(
+    coordinates(0), coordinates(1), locationB.coordinates(0), locationB.coordinates(1)
+  )
+}
 
 object Location {
 
@@ -19,4 +25,5 @@ object Location {
       "coordinates" -> location.coordinates
     )
   }
+
 }

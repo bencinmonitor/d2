@@ -1,2 +1,6 @@
+GET      /                          controllers.HomeController.index
+
 GET      /stations                  controllers.StationController.index(near: Option[String], at: Option[String], limit: Int ?= 10, maxDistance: Int ?= 10000)
 GET      /geocode                   controllers.StationController.geocode_it(address: String)
+
+# GET      /cache                     controllers.StationController.cache_state

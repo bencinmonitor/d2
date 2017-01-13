@@ -4,7 +4,9 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
 
-case class Station(key: String, address: String, location: Location, prices: Map[String, Double])
+case class Station(key: String, address: String, location: Location, prices: Map[String, Double]) {
+  var distanceToOrigin: Double = 0.0
+}
 
 object Station {
 
@@ -22,7 +24,7 @@ object Station {
 
   implicit object StationWriter extends BSONDocumentWriter[Station] {
     def write(station: Station): BSONDocument = {
-      BSONDocument(
+      var stationJson = BSONDocument(
         "key" -> station.key,
         "address" -> station.address,
         "loc" -> station.location,
@@ -30,6 +32,10 @@ object Station {
           "type" -> pair._1.replace("-", "_"), "price" -> pair._2)
         )
       )
+
+      if (station.distanceToOrigin != 0.0) stationJson = stationJson.add("distance" -> station.distanceToOrigin)
+
+      stationJson
     }
   }
 
