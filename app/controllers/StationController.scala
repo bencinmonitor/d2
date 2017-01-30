@@ -1,5 +1,6 @@
 package controllers
 
+import java.net.URLEncoder
 import javax.inject._
 
 import play.api._
@@ -8,6 +9,7 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.ws._
 import play.modules.reactivemongo._
+import play.filters.gzip.{Gzip, GzipFilter}
 
 import scala.util.Success
 import scala.concurrent.{ExecutionContext, Future}
@@ -26,8 +28,8 @@ import Dress._
 import redis.clients.jedis._
 
 @Singleton
-class StationController @Inject()(val reactiveMongoApi: ReactiveMongoApi, val ws: WSClient, val redis: RedisPool)(implicit exec: ExecutionContext)
-  extends Controller with MongoController with ReactiveMongoComponents {
+class StationController @Inject()(val reactiveMongoApi: ReactiveMongoApi, val ws: WSClient, val redis: RedisPool, val gzipFilter: GzipFilter)(implicit exec: ExecutionContext)
+  extends Controller with MongoController with ReactiveMongoComponents  {
 
   lazy val stations: Future[JSONCollection] = database.map(_.collection("stations"))
 
@@ -89,7 +91,14 @@ class StationController @Inject()(val reactiveMongoApi: ReactiveMongoApi, val ws
           "$maxDistance" -> maxDistance)
         )))
       }
-      var projection = BSONDocument("key" -> 1, "address" -> 1, "loc" -> 1, "updated_at" -> 1, "scraped_url" -> 1)
+      var projection = BSONDocument(
+        "key" -> 1,
+        "name" -> 1,
+        "address" -> 1,
+        "loc" -> 1,
+        "updated_at" -> 1,
+        "scraped_url" -> 1
+      )
 
       projection = projection.add("prices" -> "1")
 
@@ -102,11 +111,21 @@ class StationController @Inject()(val reactiveMongoApi: ReactiveMongoApi, val ws
     }
   }
 
-  def index(near: Option[String] = None, at: Option[String], limit: Int, maxDistance: Int): Action[AnyContent] = Action.async {
+  def allStations(): Future[List[Station]] = {
+    stations.flatMap {
+      val query =  BSONDocument("company" -> "petrol")
+      val projection = BSONDocument()
+      _.find(query, projection).cursor[Station]().collect[List]()
+    }
+  }
+
+  def index(near: Option[String] = None, at: Option[String], limit: Int, maxDistance: Int, forMobile: Boolean): Action[AnyContent] = Action.async { implicit request =>
     val now = System.nanoTime
     val atLocation = at.fold(Seq.empty[Double])(_.split(",").map(_.toDouble))
 
-    val composition: Future[List[Station]] = if (near.isEmpty && atLocation.nonEmpty) {
+    val composition: Future[List[Station]] = if (forMobile) {
+      allStations()
+    } else if (near.isEmpty && atLocation.nonEmpty) {
       listStations(atLocation, limit, maxDistance)
     } else if (near.nonEmpty) {
       geocode(near).flatMap(listStations(_, limit, maxDistance))
@@ -115,17 +134,35 @@ class StationController @Inject()(val reactiveMongoApi: ReactiveMongoApi, val ws
     }
 
     composition.map { stations =>
-      Ok(Json.toJson(BSONDocument(
-        "stations" -> stations,
-        "status" -> "ok",
-        "executed_in" -> ((System.nanoTime - now).asInstanceOf[Double] / 1000000000)
-      )))
+      cacheResponse("cache:stations:%s", request, 2.hours) {
+        Ok(Json.toJson(BSONDocument(
+          "stations" -> stations,
+          "status" -> "ok",
+          "executed_in" -> ((System.nanoTime - now).asInstanceOf[Double] / 1000000000)
+        )))
+      }
     }
   }
 
-  def cache_state() = Action {
-    Ok(Json.obj("keys" -> redis.withJedisClient[java.util.Set[String]](
-      client => Dress.up(client).keys("address:*")
-    ).asScala))
+  def cache_state() = Action(Ok(Json.obj("keys" -> redis.withJedisClient[java.util.Set[String]](
+    client => Dress.up(client).keys("address:*")
+  ).asScala)))
+
+  def cacheResponse(namespace: String, request: Request[AnyContent], duration: FiniteDuration)(result: Result) = {
+    val key = request.queryString.map { case (k,v) => s"${k}=${URLEncoder.encode(v.mkString, "UTF-8")}" }.mkString("&")
+    val cacheKey:String = namespace.format(key)
+
+    //TODO: Not yet implemented.
+    Logger.info(s"Caching ${cacheKey} for ${duration}")
+
+    val inCacheJson = redis.withJedisClient[Option[String]](c => Dress.up(c).get(cacheKey))
+
+    if(inCacheJson.isEmpty) {
+      Logger.info(s"Not in cache ~> $inCacheJson")
+    } else {
+      Logger.info(s"In cache ~> $inCacheJson")
+    }
+    
+    result
   }
 }

@@ -14,11 +14,11 @@ scalaVersion := "2.11.8"
 
 libraryDependencies ++= Seq(
   ws,
+  filters,
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.14",
   "com.typesafe.play.modules" %% "play-modules-redis" % "2.5.0",
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.0" % "test"
 )
-
 
 scalacOptions in ThisBuild ++= Seq(
   "-feature",
