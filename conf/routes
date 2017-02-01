@@ -3,4 +3,8 @@ GET      /                          controllers.HomeController.index
 GET      /stations                  controllers.StationController.index(near: Option[String], at: Option[String], limit: Int ?= 10, maxDistance: Int ?= 10000, forMobile: Boolean ?= false)
 GET      /geocode                   controllers.StationController.geocode_it(address: String)
 
+GET      /feed                      controllers.FeedController.index
+GET      /ws                        controllers.FeedController.ws
+
+
 # GET      /cache                     controllers.StationController.cache_state

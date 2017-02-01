@@ -135,11 +135,15 @@ class StationController @Inject()(val reactiveMongoApi: ReactiveMongoApi, val ws
 
     composition.map { stations =>
       cacheResponse("cache:stations:%s", request, 2.hours) {
+
+
         Ok(Json.toJson(BSONDocument(
           "stations" -> stations,
           "status" -> "ok",
           "executed_in" -> ((System.nanoTime - now).asInstanceOf[Double] / 1000000000)
         )))
+
+
       }
     }
   }
