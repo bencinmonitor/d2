@@ -34,6 +34,7 @@ import models.Station._
 import helpers.SlugifyText
 import org.sedis.{Pool => RedisPool, _}
 import Dress._
+import actors.{HubActor, WebSocketActor, PingActor}
 import akka.event.LoggingReceive
 import redis.clients.jedis._
 import play.libs.Akka
@@ -41,106 +42,16 @@ import akka.actor._
 import akka.pattern.ask
 import akka.actor._
 
+import actors._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PingActor(hub: ActorRef) extends Actor with ActorLogging {
-  //TODO: Replace this with Redis psubscribe
-  private var scheduler: Cancellable = _
-
-  import scala.concurrent.duration._
-  scheduler = context.system.scheduler.schedule(
-    initialDelay = 1 seconds, interval = 3 seconds, receiver = self,
-    message = "[tick]"
-  )
-
-  override def preStart() = {
-    println("PingActor actor preStart()")
-  }
-
-  def receive = LoggingReceive {
-    case x:String => {
-      println(s"PingActor ~> ${x}")
-      hub ! s"Event: ${x}"
-    }
-    case _ => println("This is PingActor, whatever.")
-  }
-
-  override def postStop(): Unit = { scheduler.cancel() }
-}
-
-class MyWebSocketActor(out: ActorRef, hub: ActorRef) extends Actor with ActorLogging {
-  import play.api.libs.json.JsValue
-  override def preStart() = hub ! ConnectionMade()
-
-  def receive = LoggingReceive {
-    case msg: JsValue =>
-      out ! Json.obj("got" -> msg)
-    case BroadcastMessage(message) =>
-      out ! Json.obj("event"->"time", "message" -> message, "created_at" -> Calendar.getInstance().getTime())
-    case _ =>
-      out ! Json.toJson(Json.obj("error" -> "Sorry, only JSON!"))
-  }
-}
-
-class HubActor extends Actor with ActorLogging {
-  var connections = Set.empty[ActorRef]
-
-  def receive = {
-    case ConnectionMade() =>
-      println("HubActor ~> Connection was made.")
-      connections += sender
-      context watch sender
-    case x:String =>
-      println(s"HubActor got String~> ${x}")
-      self ! Broadcast(x)
-    case Broadcast(message) =>
-      connections.foreach { actor =>
-        println(s"Sending to actor ${actor}")
-        actor ! BroadcastMessage(message)
-      }
-    case _ => println("HubActor,...")
-  }
-}
-
-case class ConnectionMade()
-case class ConnectionBroken()
-case class Broadcast(message:String)
-case class BroadcastMessage(message: String)
-
-case class Message(nickname: String, userId: Int, msg: String)
-object Subscribe
-
-
-
-
-
-
-
-class FeedController @Inject() (implicit system: ActorSystem, materializer: Materializer) extends Controller {
+class FeedController @Inject() (implicit system: ActorSystem, materializer: Materializer, @Named("hubActor") hub: ActorRef) extends Controller {
   import akka.actor._
 
-  object HubActor {
-    lazy val connections = system.actorOf(Props[HubActor])
-    def apply() : ActorRef = connections
+  val ping = system.actorOf(Props(classOf[PingActor], hub))
+
+  def feed = WebSocket.accept[JsValue, JsValue] { implicit request =>
+    ActorFlow.actorRef(out => Props(classOf[WebSocketActor], out, hub))
   }
-
-  object MyWebSocketActor {
-    var connections = 0
-    def props(out: ActorRef) = {
-      connections += 1
-      Props(new MyWebSocketActor(out, HubActor()))
-    }
-  }
-
-  val ping = system.actorOf(Props(classOf[PingActor], HubActor()))
-
-  def index() = Action {
-    Ok("feed here.")
-  }
-
-
-  def ws = WebSocket.accept[JsValue, JsValue] { implicit request =>
-    ActorFlow.actorRef(MyWebSocketActor.props)
-  }
-
 }

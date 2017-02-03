@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "play2-reactivemongo" % "0.11.14",
   "com.github.etaty" %% "rediscala" % "1.8.0",
   "com.typesafe.play.modules" %% "play-modules-redis" % "2.5.0",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.5-M1",
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.0" % "test"
 )
 
