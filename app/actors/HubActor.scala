@@ -1,7 +1,8 @@
 package actors
 
 import javax.inject.{Inject, Named, Singleton}
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+
+import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import akka.event.LoggingReceive
 
 import scala.concurrent.ExecutionContext

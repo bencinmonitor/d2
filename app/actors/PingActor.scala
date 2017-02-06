@@ -16,10 +16,12 @@ class PingActor @Inject()(@Assisted hub: ActorRef) extends Actor with ActorLoggi
   import PingActor._
   private var scheduler: Cancellable = _
 
+  //TODO: https://github.com/pvillega/play21-redis-pubsub/blob/d22c3372a74bd73c904f77217fc051dbd8c7c57b/app/controllers/Application.scala
+
   import scala.concurrent.duration._
   scheduler = context.system.scheduler.schedule(
-    initialDelay = 1 seconds,
-    interval = 3 seconds,
+    initialDelay = 3 seconds,
+    interval = 10 seconds,
     receiver = self,
     message = Tick()
   )

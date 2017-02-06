@@ -17,6 +17,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     // bindActor[CurrenciesActor]("currenciesActor")
 
     bindActor[HubActor]("hubActor")
+    bindActor[RedisEventsActor]("redisEventsActor")
 
     // bind(classOf[HubActor]).annotatedWith(Names.named("hubActor")).asEagerSingleton()
     // bind(classOf[Actor]).annotatedWith(Names.named("hubActor")).to(HubActor)
