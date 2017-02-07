@@ -28,10 +28,10 @@ class RedisEventsActor @Inject()(@Named("hubActor") hub: ActorRef, val redis: Re
 
   import RedisEventsActor._
 
+  final var PATTERN: String = "events.*"
+
   Future {
-    redis.withJedisClient { implicit client =>
-      client.psubscribe(new Listener(this), "events.*")
-    }
+    redis.withJedisClient { implicit client => client.psubscribe(new Listener(this), PATTERN) }
   }(executionContext)
 
   def receive = LoggingReceive {
@@ -69,7 +69,6 @@ class RedisEventsActor @Inject()(@Named("hubActor") hub: ActorRef, val redis: Re
     def onPUnsubscribe(pattern: String, subscribedChannels: Int): Unit = {
       Logger.info("onPUnsubscribe[%s, %d]".format(pattern, subscribedChannels))
     }
-
   }
 
 }

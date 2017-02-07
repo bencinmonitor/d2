@@ -7,6 +7,7 @@ import akka.event.LoggingReceive
 import play.api.libs.json.Json
 
 class WebSocketActor @Inject()(@Assisted out: ActorRef, @Assisted hub: ActorRef) extends Actor with ActorLogging {
+
   import play.api.libs.json.JsValue
 
   override def preStart(): Unit = hub ! HubActor.ConnectionMade()

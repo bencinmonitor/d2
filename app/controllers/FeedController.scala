@@ -8,7 +8,8 @@ import akka.stream._
 import actors.{WebSocketActor, PingActor}
 import akka.actor._
 
-class FeedController @Inject() (implicit system: ActorSystem, materializer: Materializer, @Named("hubActor") hub: ActorRef) extends Controller {
+class FeedController @Inject()(implicit system: ActorSystem, materializer: Materializer, @Named("hubActor") hub: ActorRef) extends Controller {
+
   import akka.actor._
 
   val ping = system.actorOf(Props(classOf[PingActor], hub))
